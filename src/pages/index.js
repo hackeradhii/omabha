@@ -1,115 +1,228 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
+import { getProducts, getHeroCollections } from '../lib/shopify';
+import Link from 'next/link';
+import WishlistButton from '@/components/WishlistButton';
+import ReviewSummary from '@/components/ReviewSummary';
+import MobileProductCard from '@/components/MobileProductCard';
+import Image from 'next/image';
+import { InventoryStatus } from '@/components/InventoryManagement';
+import { MarketingPopup } from '@/components/MarketingPromotions';
+import SEO from '@/components/SEO';
+import { useCart } from '@/context/CartContext';
+import HeroCarousel from '@/components/HeroCarousel';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+function ProductCard({ product }) {
+  const { title, handle, priceRange, images, compareAtPriceRange, availableForSale, tags } = product;
+  const { addToCart } = useCart();
+  const imageUrl = images?.nodes?.[0]?.url;
+  const price = priceRange.minVariantPrice.amount;
+  const comparePrice = compareAtPriceRange?.minVariantPrice?.amount;
+  
+  const discount = comparePrice && price ? Math.round(((comparePrice - price) / comparePrice) * 100) : 0;
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+  const handleAddToCart = () => {
+    if (product.variants?.edges?.[0]?.node) {
+      addToCart({
+        id: product.variants.edges[0].node.id,
+        title: product.title,
+        price: product.variants.edges[0].node.price,
+        image: product.images.nodes?.[0] || product.images.edges?.[0]?.node || { url: imageUrl, altText: title }
+      });
+    }
+  };
 
-export default function Home() {
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20`}
-    >
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/pages/index.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+    <div className="group relative bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gold/10">
+      <Link href={`/products/${handle}`}>
+        <div className="aspect-[3/4] overflow-hidden bg-gray-100 relative">
+          {imageUrl ? (
             <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+              src={imageUrl}
+              alt={images?.nodes?.[0]?.altText || `Image of ${title}`}
+              width={600}
+              height={800}
+              className="object-cover object-center w-full h-full group-hover:scale-105 transition-transform duration-500"
+              priority={false}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          ) : (
+            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+              <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+          )}
+          
+          {/* Discount Badge */}
+          {discount > 0 && (
+            <div className="absolute top-3 left-3 bg-burgundy text-white px-2 py-1 rounded-full text-xs font-bold">
+              {discount}% OFF
+            </div>
+          )}
+          
+          {/* Availability Badge */}
+          {!availableForSale && (
+            <div className="absolute bottom-3 left-3 bg-gray-800 text-white px-2 py-1 rounded-full text-xs font-medium">
+              Out of Stock
+            </div>
+          )}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+      </Link>
+      
+      {/* Wishlist Button */}
+      <div className="absolute top-3 right-3">
+        <WishlistButton 
+          product={product} 
+          size="md" 
+          variant="icon" 
+          className="bg-white/80 hover:bg-white shadow-sm"
+        />
+      </div>
+      
+      <div className="p-4">
+        <Link href={`/products/${handle}`}>
+          <h3 className="font-medium text-charcoal line-clamp-2 mb-2 group-hover:text-burgundy transition-colors">
+            {title}
+          </h3>
+        </Link>
+        
+        {/* Tags */}
+        {tags && tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {tags.slice(0, 2).map((tag, index) => (
+              <span key={index} className="text-xs bg-gold/10 text-charcoal/60 px-2 py-0.5 rounded">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+        
+        {/* Rating */}
+        <div className="mb-3">
+          <ReviewSummary productId={product.id} size="sm" />
+        </div>
+
+        {/* Inventory Status */}
+        <div className="mb-3">
+          <InventoryStatus 
+            product={product} 
+            variant={product.variants?.edges?.[0]?.node || product.variants?.nodes?.[0]} 
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        </div>
+        
+        <div className="flex items-baseline justify-between">
+          <div className="flex items-baseline space-x-2">
+            <span className="text-lg font-serif font-bold text-burgundy">
+              ₹{parseFloat(price).toFixed(2)}
+            </span>
+            {comparePrice && parseFloat(comparePrice) > parseFloat(price) && (
+              <span className="text-sm text-gray-500 line-through">
+                ₹{parseFloat(comparePrice).toFixed(2)}
+              </span>
+            )}
+          </div>
+          
+          {/* Add to Cart Button - Hidden on mobile (uses MobileProductCard) */}
+          <button
+            onClick={handleAddToCart}
+            disabled={!availableForSale}
+            className="hidden sm:block bg-burgundy text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gold hover:text-charcoal transition-all duration-300 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            {availableForSale ? 'Add to Cart' : 'Sold Out'}
+          </button>
+        </div>
+      </div>
     </div>
   );
+}
+
+function ResponsiveProductCard({ product }) {
+  return (
+    <>
+      {/* Mobile version */}
+      <div className="block sm:hidden">
+        <MobileProductCard product={product} />
+      </div>
+      
+      {/* Desktop version */}
+      <div className="hidden sm:block">
+        <ProductCard product={product} />
+      </div>
+    </>
+  );
+}
+
+export default function HomePage({ products, heroCollections }) {
+  console.log('🎯 Hero Collections Data:', heroCollections);
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: 'Omabha Store - Traditional Indian Clothing',
+    description: 'Discover beautiful traditional Indian clothing at Omabha Store. Handpicked sarees, kurtis, lehengas and more with authentic craftsmanship.',
+    url: process.env.NEXT_PUBLIC_SITE_URL || 'https://omabha.com',
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: products.length,
+      itemListElement: products.slice(0, 10).map((product, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item: {
+          '@type': 'Product',
+          name: product.title,
+          url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://omabha.com'}/products/${product.handle}`
+        }
+      }))
+    }
+  };
+
+  return (
+    <>
+      <SEO
+        title="Omabha Store - Premium Traditional Indian Clothing | Sarees, Kurtis, Lehengas"
+        description="Discover beautiful traditional Indian clothing at Omabha Store. Handpicked sarees, kurtis, lehengas and more with authentic craftsmanship. Free shipping across India."
+        keywords="indian clothing, sarees online, kurtis, lehengas, traditional wear, ethnic wear, handwoven sarees, silk sarees, cotton kurtis, designer lehengas, wedding wear, party wear"
+        structuredData={structuredData}
+      />
+      <main className="bg-ivory">
+        {/* Hero Carousel Section */}
+        <HeroCarousel 
+          heroCollections={heroCollections}
+          autoRotate={true}
+          interval={5000} // 5 seconds
+        />
+      
+      <div className="mx-auto max-w-2xl px-4 pt-24 pb-16 sm:px-6 sm:pt-32 sm:pb-24 lg:max-w-7xl lg:px-8">
+        <div className="text-center border-b-2 border-gold pb-4 mb-12">
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Our Latest Arrivals</h2>
+          <p className="mt-4 text-lg text-charcoal/80">Handpicked for timeless elegance.</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-y-6 gap-x-3 sm:grid-cols-2 sm:gap-y-10 sm:gap-x-6 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
+          {products.map((product) => (
+            <ResponsiveProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      </div>
+      </main>
+      
+      {/* Marketing Popup for new visitors */}
+      <MarketingPopup />
+    </>
+  );
+}
+
+export async function getStaticProps() {
+  console.log('🚀 Fetching data for homepage...');
+  
+  const result = await getProducts();
+  
+  // Fetch hero collections for carousel
+  const heroCollections = await getHeroCollections(10);
+  console.log('🎯 Hero collections found:', heroCollections.length);
+  
+  return {
+    props: {
+      products: result.products || [],
+      heroCollections: heroCollections || [],
+    },
+    revalidate: 60, // Revalidate every minute for updated content
+  };
 }

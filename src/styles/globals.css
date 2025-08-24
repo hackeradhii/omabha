@@ -1,26 +1,92 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:wght@400;700&display=swap');
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-ivory text-charcoal font-sans;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+h1, h2, h3 {
+  @apply font-serif text-charcoal;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Custom pill navbar enhancements */
+@layer utilities {
+  .navbar-pill {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(140, 31, 40, 0.1);
+  }
+  
+  .navbar-pill:hover {
+    box-shadow: 0 12px 48px rgba(140, 31, 40, 0.15);
+  }
+  
+  .smooth-transform {
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* Mobile-specific utilities */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+  
+  .active\:scale-95:active {
+    transform: scale(0.95);
+  }
+  
+  .active\:scale-98:active {
+    transform: scale(0.98);
+  }
+  
+  /* Mobile-optimized tap targets */
+  .tap-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Mobile scroll improvements */
+  .mobile-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  
+  /* Mobile-friendly focus states */
+  .mobile-focus:focus {
+    outline: 2px solid #8C1F28;
+    outline-offset: 2px;
+  }
+  
+  /* Prevent text selection on touch elements */
+  .no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
