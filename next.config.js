@@ -146,18 +146,6 @@ const nextConfig = {
       };
     }
 
-    // Add service worker
-    if (!dev && !isServer) {
-      const originalEntry = config.entry;
-      config.entry = async () => {
-        const entries = await originalEntry();
-        if (entries['main.js'] && !entries['main.js'].includes('./src/sw.js')) {
-          entries['main.js'].push('./src/sw.js');
-        }
-        return entries;
-      };
-    }
-
     return config;
   },
 
